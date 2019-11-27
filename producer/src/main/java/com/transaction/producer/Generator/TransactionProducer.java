@@ -24,7 +24,7 @@ public class TransactionProducer {
 
     public void init() {
         executorService.scheduleAtFixedRate(new Dispatch(), 1,
-                1,
+                1000,
                 TimeUnit.MILLISECONDS);
     }
 
