@@ -25,13 +25,13 @@ public class Dispatch implements Runnable {
     private Environment env;
 
     public Dispatch() {
-        HashMap<String, Object> configProperties = new HashMap<>();
+        /*HashMap<String, Object> configProperties = new HashMap<>();
         configProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 "localhost:9092");
         configProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         kafkaTemplate = new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configProperties),
-            true);
+            true);*/
     }
 
     public void run() {

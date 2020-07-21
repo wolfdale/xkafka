@@ -19,18 +19,16 @@ import java.util.HashMap;
 public class KafkaConfigurations {
     private static Logger log = LoggerFactory.getLogger(KafkaConfigurations.class);
 
-    @Autowired
-    private Environment env;
-
-
+    @Value(value = "${kafka.bootstrap.server}")
+    private String bootstrapAddress;
 
     @Bean
     public ProducerFactory<String, String> producerFactory() {
 
-        log.info("Kafka broker address {} ", env.getProperty("kafka.bootstrap.server"));
+        log.info("Kafka broker address {} ", bootstrapAddress);
         HashMap<String, Object> configProperties = new HashMap<>();
         configProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                env.getProperty("kafka.bootstrap.server"));
+                bootstrapAddress);
         configProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
