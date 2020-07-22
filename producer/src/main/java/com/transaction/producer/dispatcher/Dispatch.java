@@ -1,51 +1,44 @@
 package com.transaction.producer.dispatcher;
 
 import com.fasterxml.uuid.Generators;
+import com.transaction.producer.KafkaConfigurations;
 import com.transaction.producer.model.Transaction;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-
-@Service
-public class Dispatch implements Runnable {
+@Component
+public class Dispatch {
     private static Logger log = LoggerFactory.getLogger(Dispatch.class);
 
     @Autowired
+    private KafkaConfigurations kConfig;
+    @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
-    @Autowired
-    private Environment env;
-
-    public Dispatch() {
-        HashMap<String, Object> configProperties = new HashMap<>();
-        configProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9092");
-        configProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        kafkaTemplate = new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configProperties),
-            true);
-    }
-
-    public void run() {
-        String isApproved = Math.random() < 0.5 ? "Approved" : "Rejected";
-        Transaction transaction = new Transaction(Generators.timeBasedGenerator().generate().toString(),
-                isApproved);
-        log.info("Transaction Generated {}", transaction.toString());
-        dispatchPayloadToKafka(transaction.toString());
-    }
-
-    public void dispatchPayloadToKafka(String payload) {
-        if (kafkaTemplate == null) {
-            log.error("KafkaTemp not available");
+    @Scheduled(fixedRateString = "${transaction.generation.rate}")
+    public void dispatchToKafka() {
+        try {
+            String isApproved = Math.random() < 0.5 ? "Approved" : "Rejected";
+            Transaction transaction = new Transaction(Generators.timeBasedGenerator().generate().toString(),
+                    isApproved, "java-client");
+            String topic = kConfig.getKafkaTopic();
+            log.info("Transaction Generated: {} for kafka topic: {}", transaction.toString(), topic);
+            dispatchPayloadToKafka(transaction.toString(), topic);
+        } catch(Exception e){
+            log.info("An Exception has occured.");
         }
-        kafkaTemplate.send("transactions", payload);
+    }
+
+    public void dispatchPayloadToKafka(String payload, String topic) {
+        if (kafkaTemplate == null) {
+            log.error("Kafka broker not available");
+        }
+
+        kafkaTemplate.send(topic, payload);
     }
 }
