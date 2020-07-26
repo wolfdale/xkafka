@@ -6,8 +6,10 @@ import com.transaction.producer.model.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +20,7 @@ public class Dispatch {
     @Autowired
     private KafkaConfigurations kConfig;
     @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaTemplate<String, Transaction> kafkaTemplate;
 
     @Scheduled(fixedRateString = "${transaction.generation.rate}")
     public void dispatchToKafka() {
@@ -28,17 +30,20 @@ public class Dispatch {
                     isApproved, "java-client");
             String topic = kConfig.getKafkaTopic();
             log.info("Transaction Generated: {} for kafka topic: {}", transaction.toString(), topic);
-            dispatchPayloadToKafka(transaction.toString(), topic);
-        } catch(Exception e){
+            dispatchPayloadToKafka(transaction, topic);
+        } catch (Exception e) {
             log.info("An Exception has occured.");
         }
     }
 
-    public void dispatchPayloadToKafka(String payload, String topic) {
+    public void dispatchPayloadToKafka(Transaction transaction, String topic) {
         if (kafkaTemplate == null) {
             log.error("Kafka broker not available");
         }
-
-        kafkaTemplate.send(topic, payload);
+        Message<Transaction> message = MessageBuilder
+                .withPayload(transaction)
+                .setHeader(KafkaHeaders.TOPIC, topic)
+                .build();
+        kafkaTemplate.send(message);
     }
 }
