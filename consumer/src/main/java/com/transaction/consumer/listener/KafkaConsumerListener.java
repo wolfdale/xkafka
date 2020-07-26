@@ -1,8 +1,8 @@
 package com.transaction.consumer.listener;
 
-import com.google.gson.Gson;
 import com.transaction.consumer.EsConfiguration;
-import com.transaction.model.Transaction;
+import com.transaction.consumer.model.EsTransactionPayload;
+import com.transaction.consumer.model.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +12,10 @@ import org.springframework.data.elasticsearch.core.query.IndexQuery;
 import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.handler.annotation.Headers;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 public class KafkaConsumerListener {
@@ -27,26 +28,35 @@ public class KafkaConsumerListener {
     private ElasticsearchOperations elasticsearchOperations;
 
     @Autowired
-    ConcurrentKafkaListenerContainerFactory<String, String> consumer;
+    ConcurrentKafkaListenerContainerFactory<String, Transaction> consumer;
 
-    @KafkaListener(topics =  "${kafka.topic.name}", groupId =  "${kafka.group.id}",
+    @KafkaListener(topics = "${kafka.topic.name}", groupId = "${kafka.group.id}",
             containerFactory = "kafkaListenerContainerFactory")
-    public void consumeJson(String transaction) {
-        log.info("Consumed Message: " + transaction);
-        Gson gson = new Gson();
-        Transaction trans = gson.fromJson(transaction, Transaction.class);
-        if(elasticConfig.isElasticSearchEnabled()) {
-            IndexCoordinates indexCoordinates =
-                    elasticsearchOperations.getIndexCoordinatesFor(Transaction.class);
-            IndexQuery indexQuery = new IndexQueryBuilder()
-                    .withId(trans.getUuid())
-                    .withObject(trans)
-                    .build();
+    public void consumeJson(@Payload Transaction transaction, @Headers MessageHeaders headers) {
+        log.info("Message from kafka: " + transaction.toString());
 
-            String docId = elasticsearchOperations.index(indexQuery, indexCoordinates);
-            log.info("Document Id :" + docId);
+        if (elasticConfig.isElasticSearchEnabled()) {
+            try {
+                IndexCoordinates indexCoordinates =
+                        elasticsearchOperations.getIndexCoordinatesFor(EsTransactionPayload.class);
+                IndexQuery indexQuery = new IndexQueryBuilder()
+                        .withId(transaction.getUuid())
+                        .withObject(buildPayload(transaction))
+                        .build();
+
+                String docId = elasticsearchOperations.index(indexQuery, indexCoordinates);
+                log.info("Transaction stored in ES with Id :" + docId);
+            } catch (Exception e) {
+                log.error("Elastic Search is not available at this moment.");
+            }
         }
-
     }
 
+    private EsTransactionPayload buildPayload(Transaction t) {
+        EsTransactionPayload esPayload = new EsTransactionPayload();
+        esPayload.setClient(t.getClient());
+        esPayload.setStatus(t.getStatus());
+        esPayload.setUuid(t.getUuid());
+        return esPayload;
+    }
 }

@@ -1,4 +1,4 @@
-package com.transaction.model;
+package com.transaction.consumer.model;
 
 public class Transaction {
     String uuid;
@@ -29,17 +29,18 @@ public class Transaction {
         this.client = client;
     }
 
-    public Transaction(String uuid, String status, String client){
+    public Transaction(String uuid, String status, String client) {
         this.uuid = uuid;
         this.status = status;
         this.client = client;
     }
-    public Transaction(){
+
+    public Transaction() {
 
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "[" + this.uuid + ", " + this.status + ", " + this.client + "]";
     }
 }

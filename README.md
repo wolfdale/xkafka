@@ -1,2 +1,2 @@
-# kafkaPOC
-A small POC to handle huge volume of credit card transactions. Card Transaction Producer is implemented in Spring boot with kafka dependency. Redis to validate the card transaction.
+# xkafka
+A Kafka pipeline to handle huge volume of credit card transactions & perform real time data analysis. Card Transaction Producer is implemented in Spring boot with kafka dependency to produce credit card transaction with [Approved, Rejected] status. Kafka consumer is also impelemnted in Spring boot with kafka dependency to consume the data from kafka broker and persist in Elastic Serach, which later will be available to perform data analysis. 

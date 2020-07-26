@@ -14,7 +14,7 @@ public class EsConfiguration extends AbstractElasticsearchConfiguration {
     @Value(value = "${elastic.bootstrap.server}")
     private String esServer;
 
-    @Value(value= "${elastic.search.enabled}")
+    @Value(value = "${elastic.search.enabled}")
     private boolean isElasticSearchEnabled;
 
     @Override
