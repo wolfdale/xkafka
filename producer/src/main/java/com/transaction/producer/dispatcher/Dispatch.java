@@ -27,7 +27,7 @@ public class Dispatch {
         try {
             String isApproved = Math.random() < 0.5 ? "Approved" : "Rejected";
             Transaction transaction = new Transaction(Generators.timeBasedGenerator().generate().toString(),
-                    isApproved, "java-client");
+                    isApproved, kConfig.getClient());
             String topic = kConfig.getKafkaTopic();
             log.info("Transaction Generated: {} for kafka topic: {}", transaction.toString(), topic);
             dispatchPayloadToKafka(transaction, topic);
