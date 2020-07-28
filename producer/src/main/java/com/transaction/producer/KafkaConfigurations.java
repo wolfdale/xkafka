@@ -25,6 +25,10 @@ public class KafkaConfigurations {
     @Value(value = "${kafka.topic.name}")
     public String topic;
 
+    @Value(value = "${producer.client.type}")
+    public String client;
+
+
     private ProducerFactory<String, Transaction> producerFactory() {
         log.info("Kafka broker address {} ", bootstrapAddress);
         HashMap<String, Object> configProperties = new HashMap<>();
@@ -42,5 +46,9 @@ public class KafkaConfigurations {
 
     public String getKafkaTopic() {
         return this.topic;
+    }
+
+    public String getClient() {
+        return this.client;
     }
 }
