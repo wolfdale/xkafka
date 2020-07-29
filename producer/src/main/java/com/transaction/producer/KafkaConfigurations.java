@@ -51,4 +51,8 @@ public class KafkaConfigurations {
     public String getClient() {
         return this.client;
     }
+
+    public String getBootstrapServer() {
+        return this.bootstrapAddress;
+    }
 }
