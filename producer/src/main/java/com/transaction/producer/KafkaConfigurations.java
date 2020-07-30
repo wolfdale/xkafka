@@ -28,6 +28,9 @@ public class KafkaConfigurations {
     @Value(value = "${producer.client.type}")
     public String client;
 
+    @Value(value = "${kafka.metadata.request}")
+    public String metadataRequestInterval;
+
 
     private ProducerFactory<String, Transaction> producerFactory() {
         log.info("Kafka broker address {} ", bootstrapAddress);
@@ -51,4 +54,13 @@ public class KafkaConfigurations {
     public String getClient() {
         return this.client;
     }
+
+    public String getBootstrapServer() {
+        return this.bootstrapAddress;
+    }
+
+    public String getMetadataRequestInterval() {
+        return this.metadataRequestInterval;
+    }
+
 }
