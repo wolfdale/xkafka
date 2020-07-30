@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -27,16 +28,24 @@ public class KafkaMetadata {
 
     @Scheduled(fixedRateString = "${kafka.metadata.request}")
     public void getMetadata() {
-        log.info("Pulling metadta");
-        AdminClient client = KafkaAdminClient.create(getProperties());
-        DescribeClusterResult cluster = client.describeCluster();
+        log.info("Getting Kafka cluster Metadata");
+        AdminClient client = null;
         try {
+            client = KafkaAdminClient.create(getProperties());
+            DescribeClusterResult cluster = client.describeCluster();
+
             Collection<Node> kNodes = cluster.nodes().get();
             for (Node n : kNodes) {
                 log.info("Kafka Cluster Node IP : " + n.host() + ":" + n.port());
             }
         } catch (Exception e) {
-            log.error("Kafa Cluster Metadata is not available");
+            log.error("Kafka Cluster Metadata is not available. Retrying in {}ms...",
+                    kConfig.getMetadataRequestInterval());
+        } finally {
+            log.info("Closing admin client connection.");
+            if (client != null) {
+                client.close(Duration.ofMillis(100));
+            }
         }
     }
 
