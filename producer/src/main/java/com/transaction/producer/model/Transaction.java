@@ -29,6 +29,10 @@ public class Transaction implements Serializable {
     public Transaction() {
     }
 
+    public String getStatus() {
+        return this.status;
+    }
+
     @Override
     public String toString() {
         return "[" + this.uuid + ", " + this.status + ", " + this.client + "]";

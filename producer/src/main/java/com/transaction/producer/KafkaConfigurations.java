@@ -1,5 +1,6 @@
 package com.transaction.producer;
 
+import com.transaction.producer.dispatcher.KafkaTransactionPartitioner;
 import com.transaction.producer.model.Transaction;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -31,6 +32,9 @@ public class KafkaConfigurations {
     @Value(value = "${kafka.metadata.request}")
     public String metadataRequestInterval;
 
+    @Value(value = "${kafka.enable.custom.partitioner}")
+    public boolean customPartitioner;
+
 
     private ProducerFactory<String, Transaction> producerFactory() {
         log.info("Kafka broker address {} ", bootstrapAddress);
@@ -38,7 +42,9 @@ public class KafkaConfigurations {
         configProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         configProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-
+        if (customPartitioner) {
+            configProperties.put(ProducerConfig.PARTITIONER_CLASS_CONFIG, KafkaTransactionPartitioner.class);
+        }
         return new DefaultKafkaProducerFactory<>(configProperties);
     }
 
@@ -61,6 +67,10 @@ public class KafkaConfigurations {
 
     public String getMetadataRequestInterval() {
         return this.metadataRequestInterval;
+    }
+
+    public boolean isCustomPartitionerEnabled() {
+        return this.customPartitioner;
     }
 
 }
