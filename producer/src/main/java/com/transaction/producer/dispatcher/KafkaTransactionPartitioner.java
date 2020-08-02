@@ -4,38 +4,34 @@ import com.transaction.producer.model.Transaction;
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * A custom partitioner to allow [Rejected] transaction
- * to fall on specific Kafka partition.
+ * A custom partitioner to make sure all [Rejected] transaction
+ * to fall on specific Kafka partition rather than evenly distributed
+ * to all partitions in the cluster.
+ *
  */
 @Component
-public class CustomKafkaPartitioner implements Partitioner {
-    private static Logger log = LoggerFactory.getLogger(CustomKafkaPartitioner.class);
+public class KafkaTransactionPartitioner implements Partitioner {
+    private static Logger log = LoggerFactory.getLogger(KafkaTransactionPartitioner.class);
 
     @Override
     public int partition(String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
         List<PartitionInfo> partitionInfos = cluster.partitionsForTopic(topic);
         int numberOfPartitions = partitionInfos.size();
 
-        log.info("Number of Partitions : " + numberOfPartitions);
-        log.info("Key : " + key);
-        log.info("Value : " + value);
-        Transaction t = (Transaction) value;
-
-        if (numberOfPartitions > 1 && t.getStatus().equalsIgnoreCase("Rejected")) {
-            log.info("Sending this to zero partition");
+        if (numberOfPartitions > 1 && ((Transaction) value).getStatus().equalsIgnoreCase("Rejected")) {
             return 0;
+        } else {
+            return Utils.toPositive(Utils.murmur2(keyBytes)) % numberOfPartitions;
         }
-        // Need to hash key and divide it with number of remaining partitions.
-        return 1;
     }
 
     @Override

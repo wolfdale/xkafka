@@ -44,18 +44,19 @@ public class Dispatch {
         }
 
         ProducerRecord<String, Transaction> record = new ProducerRecord<>(topic, transaction.getUuid(), transaction);
-        /*Message<Transaction> message = MessageBuilder
-                .withPayload(transaction)
-                .setHeader(KafkaHeaders.TOPIC, topic)
-                .build();*/
-        ListenableFuture<SendResult<String, Transaction>> result = kafkaTemplate.send(record);
-        SendResult<String, Transaction> sendResult = null;
-        try {
-            sendResult = result.get();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (kConfig.isCustomPartitionerEnabled()) {
+            ListenableFuture<SendResult<String, Transaction>> result = kafkaTemplate.send(record);
+            SendResult<String, Transaction> sendResult = null;
+            try {
+                sendResult = result.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            log.info("Sent to partition " + sendResult.getRecordMetadata().partition() +
+                    " Transaction status " + transaction.getStatus());
+        } else {
+            kafkaTemplate.send(record);
         }
-        
-        log.info("Send to partition " + sendResult.getRecordMetadata().partition() + "Transaction status " + transaction.getStatus());
     }
 }
